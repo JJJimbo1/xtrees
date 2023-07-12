@@ -9,7 +9,6 @@ mod tree {
         // type Other;
         ///Should return true when the dimensions overlap.
         fn overlaps(&self, other : &Self) -> bool;
-        // fn overlaps_other(&self, other : &Self::Other) -> bool;
         ///Should return true when the dimension contains the center of the other dim.
         fn contains_center(&self, point : &Self) -> bool;
         ///Should return a vector of the dims subdivisions filled with every permutation of the dim's halfway points and half sizes, which is 2^dims.
