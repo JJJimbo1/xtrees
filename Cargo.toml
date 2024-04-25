@@ -35,7 +35,7 @@ name = "xtrees"
 path = "src/lib.rs"
 
 [dev-dependencies]
-criterion = "0.4.0"
+criterion = "0.5.1"
 simple_random = { path = "../simple_random"}
 mathfu = { path = "../math_fu"}
 rand = "0.8.4"

@@ -1,24 +1,17 @@
 #![feature(generic_const_exprs)]
 #![feature(iterator_try_collect)]
 
-pub mod tree;
-pub mod tnode;
-pub mod oct;
-pub mod quad;
-pub mod line;
-pub mod tess;
+mod line;
+mod quad;
+mod oct;
+mod tess;
+mod tnode;
+mod tree;
 
-pub use crate::{
-    tree::*,
-    tnode::*,
-    line::*,
-    quad::*,
-    oct::*,
-    tess::*,
-};
+pub use crate::{line::*, quad::*, oct::*, tess::*, tnode::*, tree::*};
 
-pub const BASE_CAPACITY : u8 = 8;
-pub const MAX_DEPTH : u8 = 8;
+pub const BASE_CAPACITY: u8 = 8;
+pub const MAX_DEPTH: u8 = 8;
 
 #[test]
 fn atest() {
@@ -46,6 +39,4 @@ fn btest() {
 
     let len = qt.search_simple(&oct3);
     println!("{:?}", len);
-
-
 }

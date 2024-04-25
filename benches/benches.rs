@@ -3,14 +3,15 @@ extern crate criterion;
 
 use criterion::Criterion;
 use mathfu::D1;
-use simple_random::*;
 use rand::random;
+use simple_random::*;
 use xtrees::*;
 
-fn run(n : usize) {
+fn run(n: usize) {
     // let mut rand = Random::<WichmannHill>::seeded(1421.234);
     // let mut v = Vec::with_capacity(n);
-    let mut qt = QuadTree::<usize>::new_tree(TNode::new(Quad::new(0.0, 0.0, 1000.0, 1000.0), 17, 12));
+    let mut qt =
+        QuadTree::<usize>::new_tree(TNode::new(Quad::new(0.0, 0.0, 1000.0, 1000.0), 17, 12));
     for i in 0..n {
         // rand.range(-1000.0, 1000.0);
         // rand.range(-1000.0, 1000.0);
@@ -23,8 +24,6 @@ fn run(n : usize) {
     //     println!("{}", v.len());
     // }
 }
-
-
 
 fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("run", |b| b.iter(|| run(1000)));
