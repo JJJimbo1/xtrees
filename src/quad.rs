@@ -1,5 +1,4 @@
-use crate::{Dimension, TNode, Tree};
-use std::{fmt::Debug, hash::Hash};
+use crate::{Dimension, TNode, Tree, DEFAULT_CAPACITY, DEFAULT_MAX_DEPTH};
 
 ///2-dimensional square.
 #[derive(Debug, Clone, Copy)]
@@ -21,50 +20,46 @@ impl Quad {
     }
 }
 
-impl Dimension for Quad {
-    const SUB_COUNT: usize = 4;
+impl Dimension<4> for Quad {
     fn overlaps(&self, area: &Self) -> bool {
-        !((self.x - area.x).abs() > (self.half_x + area.half_x) || (self.y - area.y).abs() > (self.half_y + area.half_y))
+        !( (self.x - area.x).abs() > (self.half_x + area.half_x)
+        || (self.y - area.y).abs() > (self.half_y + area.half_y))
     }
     fn contains_center(&self, point: &Self) -> bool {
-        let point_x = point.x - self.x;
-        let point_y = point.y - self.y;
-
-            point_x <= self.half_x
-            && point_y <= self.half_y
-            && point_x >= -self.half_x
-            && point_y >= -self.half_y
+        !( point.x >= self.x + self.half_x
+        || point.y >= self.y + self.half_y
+        || point.x <= self.x - self.half_x
+        || point.y <= self.y - self.half_y)
     }
-    fn subdivisions(&self) -> [Self; Self::SUB_COUNT] {
-
+    fn subdivisions(&self) -> [Self; 4] {
         let half_x = self.half_x / 2.0;
         let half_y = self.half_y / 2.0;
-        let left = self.x - half_x;
-        let right = self.x + half_x;
-        let down = self.y - half_y;
-        let up = self.y + half_y;
+        let west = self.x - half_x;
+        let east = self.x + half_x;
+        let south = self.y - half_y;
+        let north = self.y + half_y;
 
         let sw = Self::new(
-            left,
-            down,
+            west,
+            south,
             half_x,
             half_y,
         );
         let se = Self::new(
-            right,
-            down,
+            east,
+            south,
             half_x,
             half_y,
         );
         let nw = Self::new(
-            left,
-            up,
+            west,
+            north,
             half_x,
             half_y,
         );
         let ne = Self::new(
-            right,
-            up,
+            east,
+            north,
             half_x,
             half_y,
         );
@@ -74,10 +69,27 @@ impl Dimension for Quad {
 }
 
 ///2-dimensional tree representation.
-pub type QuadTree<I> = Tree<I, Quad, TNode<I, Quad>>;
+pub type QuadTree<I> = Tree<I, 4, Quad, TNode<I, 4, Quad>>;
 
-impl<I: Debug + Clone + Copy + Hash + PartialEq + Eq> QuadTree<I> {
-    pub fn new(translation: Quad, capacity: u8, max_depth: u8) -> Self {
-        Tree::new_tree(TNode::new(translation, capacity, max_depth))
+impl<I: Clone> QuadTree<I> {
+    pub fn new(translation: Quad) -> Self {
+        Tree::new_tree(TNode::new(translation, DEFAULT_CAPACITY, DEFAULT_MAX_DEPTH))
+    }
+}
+
+#[cfg(test)]
+mod quadtree_tests {
+    use super::*;
+
+    #[test]
+    fn quadtree() {
+        let mut quadtree = QuadTree::new(Quad::new(0.0, 0.0, 500.0, 500.0));
+        for x in -50..50 {
+            for y in -50..50 {
+                quadtree.insert(x * 1009 + y * 1013, Quad::new(x as f32 * 10.0 + 2.5, y as f32 * 10.0 + 2.5, 0.5, 0.5));
+            }
+        }
+        let result = quadtree.search(&Quad::new(0.0, 0.0, 50.0, 50.0));
+        assert_eq!(result.len(), 169);
     }
 }

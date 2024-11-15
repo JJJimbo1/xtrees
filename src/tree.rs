@@ -2,48 +2,45 @@ pub use tree::*;
 
 mod tree {
     use crate::TNode;
-    use std::{hash::Hash, marker::PhantomData};
+    use std::marker::PhantomData;
 
-    pub trait Dimension: Sized + Copy {
-        const SUB_COUNT: usize;
-        // type Other;
+    pub trait Dimension<const S: usize>: Sized {
         ///Should return true when the dimensions overlap.
         fn overlaps(&self, other: &Self) -> bool;
         ///Should return true when the dimension contains the center of the other dim.
         fn contains_center(&self, point: &Self) -> bool;
         ///Should return a vector of the dims subdivisions filled with every permutation of the dim's halfway points and half sizes, which is 2^dims.
-        fn subdivisions(&self) -> [Self; Self::SUB_COUNT];
+        fn subdivisions(&self) -> [Self; S];
     }
 
-    pub trait Node<I: Copy, D: Dimension> {
-        ///Insert object into the tree. Should return tree if the object was not previously inserted.
+    pub trait Node<I, const S: usize, D: Dimension<S>> {
+        ///Insert object into the tree. Should return tree if the object was actually inserted (was not already present).
         fn insert(&mut self, id: I, other: D) -> bool;
         ///Subdivide the tree.
         fn subdivide(&mut self);
-        ///Search the tree.
+        ///Search the tree using the same shape that makes up the tree nodes.
         fn search(&self, area: &D, buffer: &mut Vec<(I, D)>);
         ///Search the tree with custom overlap logic.
         fn search_with<OF>(&self, overlaps: &OF, buffer: &mut Vec<(I, D)>)
-        where
-            OF: Fn(&D) -> bool;
+        where OF: Fn(&D) -> bool;
         ///Clear the tree.
         fn clear(&mut self);
     }
 
     #[derive(Debug, Clone)]
-    pub struct Tree<I: Hash + PartialEq + Eq + Copy, D: Dimension, N: Node<I, D> = TNode<I, D>> {
+    pub struct Tree<I, const S: usize, D: Dimension<S>, N: Node<I, S, D> = TNode<I, S, D>> {
         prime: N,
         count: usize,
-        id: PhantomData<I>,
+        i: PhantomData<I>,
         dim: PhantomData<D>,
     }
 
-    impl<I: Hash + PartialEq + Eq + Copy, D: Dimension, N: Node<I, D>> Tree<I, D, N> {
+    impl<I, const S: usize, D: Dimension<S>, N: Node<I, S, D>> Tree<I, S, D, N> {
         pub fn new_tree(prime: N) -> Self {
             Self {
                 prime,
                 count: 0,
-                id: PhantomData,
+                i: PhantomData,
                 dim: PhantomData,
             }
         }
@@ -54,7 +51,7 @@ mod tree {
             }
             return false;
         }
-        pub fn search_simple(&self, area: &D) -> Vec<(I, D)> {
+        pub fn search(&self, area: &D) -> Vec<(I, D)> {
             let mut buffer = Vec::with_capacity(self.count);
             self.prime.search(area, &mut buffer);
             buffer.into_iter().collect()

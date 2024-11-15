@@ -1,32 +1,8 @@
 [package]
 name = "xtrees"
-version = "0.0.1"
-authors = ["Alten Reeves"]
-edition = "2018"
-
-# [profile.release]
-# opt-level = 3
-# debug = false
-# #split-debuginfo = '...'  # Platform-specific.
-# debug-assertions = false
-# overflow-checks = false
-# lto = "fat"
-# panic = 'unwind'
-# incremental = false
-# codegen-units = 1
-# rpath = false
-
-# [profile.bench]
-# opt-level = 3
-# debug = false
-# #split-debuginfo = '...'  # Platform-specific.
-# debug-assertions = false
-# overflow-checks = false
-# lto = "fat"
-# panic = 'unwind'
-# incremental = false
-# codegen-units = 8
-# rpath = false
+version = "0.1.0"
+authors = ["JJJimbo1"]
+edition = "2021"
 
 [dependencies]
 
@@ -36,8 +12,6 @@ path = "src/lib.rs"
 
 [dev-dependencies]
 criterion = "0.5.1"
-simple_random = { path = "../simple_random"}
-mathfu = { path = "../math_fu"}
 rand = "0.8.4"
 
 [[bench]]

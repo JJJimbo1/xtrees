@@ -1,22 +1,18 @@
 use crate::{Dimension, Node};
-use std::{convert::TryInto, fmt::Debug};
+use std::convert::TryInto;
 
 #[derive(Debug, Clone)]
-pub struct TNode<I: Clone, D: Debug + Clone + Dimension>
-where
-    [Self; D::SUB_COUNT]: Sized,
+pub struct TNode<I: Clone, const S: usize, D: Clone + Dimension<S>>
 {
     space: D,
     count: u32,
     capacity: u8,
     depth_limit: u8,
-    nodes: Option<Box<[Self; D::SUB_COUNT]>>,
+    nodes: Option<Box<Vec<Self>>>,
     objects: Vec<(I, D)>,
 }
 
-impl<I: Debug + Clone + Copy, D: Debug + Clone + Dimension> TNode<I, D>
-where
-    [Self; D::SUB_COUNT]: Sized,
+impl<I: Clone, const S: usize, D: Clone + Dimension<S>> TNode<I, S, D>
 {
     pub fn new(rect: D, capacity: u8, depth: u8) -> Self {
         Self {
@@ -33,7 +29,7 @@ where
         match &mut self.nodes {
             Some(nodes) => {
                 let mut b = false;
-                nodes.iter_mut().for_each(|n| b = b | n.insert(id, rect));
+                nodes.iter_mut().for_each(|n| b = b | n.insert(id.clone(), rect.clone()));
                 b
             }
             None => false,
@@ -41,17 +37,13 @@ where
     }
 }
 
-impl<I: Debug + Clone + Copy, D: Debug + Clone + Dimension> Node<I, D>
-    for TNode<I, D>
-where
-    [Self; D::SUB_COUNT]: Sized,
-{
+impl<I: Clone, const S: usize, D: Clone + Dimension<S>> Node<I, S, D> for TNode<I, S, D> {
     fn insert(&mut self, id: I, other: D) -> bool {
         if !self.space.overlaps(&other) {
             return false;
         }
         if self.depth_limit <= 0 {
-            self.objects.push((id, other));
+            self.objects.push((id, other.clone()));
             if self.space.contains_center(&other) {
                 self.count += 1;
                 return true;
@@ -80,13 +72,13 @@ where
             self.space
                 .subdivisions()
                 .iter()
-                .map(|d| Self::new(*d, self.capacity, self.depth_limit - 1))
+                .map(|d| Self::new(d.clone(), self.capacity, self.depth_limit - 1))
                 .collect::<Vec<Self>>()
                 .try_into()
-                .unwrap(),
+                .unwrap_or_else(|_| panic!("A node has created an incorrect number of subdivisions")),
         ));
         for i in 0..self.objects.len() {
-            let o = self.objects[i];
+            let o = self.objects[i].clone();
             self.push_to(o.0, o.1);
         }
         self.count = 0;

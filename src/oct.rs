@@ -1,5 +1,4 @@
-use crate::{Dimension, TNode, Tree, BASE_CAPACITY, MAX_DEPTH};
-use std::{fmt::Debug, hash::Hash};
+use crate::{Dimension, TNode, Tree, DEFAULT_CAPACITY, DEFAULT_MAX_DEPTH};
 
 ///3-dimensional cube.
 #[derive(Debug, Clone, Copy)]
@@ -25,13 +24,12 @@ impl Oct {
     }
 }
 
-impl Dimension for Oct {
-    const SUB_COUNT: usize = 8;
+impl Dimension<8> for Oct {
     #[inline]
     fn overlaps(&self, area: &Self) -> bool {
-        (self.x - area.x).abs() < (self.half_x + area.half_x)
-            && (self.y - area.y).abs() < (self.half_y + area.half_y)
-            && (self.z - area.z).abs() < (self.half_z + area.half_z)
+        !( (self.x - area.x).abs() > (self.half_x + area.half_x)
+        || (self.y - area.y).abs() > (self.half_y + area.half_y)
+        || (self.z - area.z).abs() > (self.half_z + area.half_z))
     }
     #[inline]
     fn contains_center(&self, point: &Self) -> bool {
@@ -42,70 +40,81 @@ impl Dimension for Oct {
             && point.y >= self.y - self.half_y
             && point.z >= self.z - self.half_z
     }
-    fn subdivisions(&self) -> [Self; Self::SUB_COUNT] {
+    fn subdivisions(&self) -> [Self; 8] {
+
+        let half_x = self.half_x / 2.0;
+        let half_y = self.half_y / 2.0;
+        let half_z = self.half_z / 2.0;
+        let west = self.x - half_x;
+        let east = self.x + half_x;
+        let south = self.y - half_y;
+        let north = self.y + half_y;
+        let down = self.z - half_z;
+        let up = self.z + half_z;
+
         let bsw = Self::new(
-            self.x - self.half_x / 2.0,
-            self.y - self.half_y / 2.0,
-            self.z - self.half_z / 2.0,
-            self.half_x / 2.0,
-            self.half_y / 2.0,
-            self.half_z / 2.0,
+            west,
+            south,
+            down,
+            half_x,
+            half_y,
+            half_z,
         );
         let bse = Self::new(
-            self.x + self.half_x / 2.0,
-            self.y - self.half_y / 2.0,
-            self.z - self.half_z / 2.0,
-            self.half_x / 2.0,
-            self.half_y / 2.0,
-            self.half_z / 2.0,
+            east,
+            south,
+            down,
+            half_x,
+            half_y,
+            half_z,
         );
         let bnw = Self::new(
-            self.x - self.half_x / 2.0,
-            self.y + self.half_y / 2.0,
-            self.z - self.half_z / 2.0,
-            self.half_x / 2.0,
-            self.half_y / 2.0,
-            self.half_z / 2.0,
+            west,
+            north,
+            down,
+            half_x,
+            half_y,
+            half_z,
         );
         let bne = Self::new(
-            self.x + self.half_x / 2.0,
-            self.y + self.half_y / 2.0,
-            self.z - self.half_z / 2.0,
-            self.half_x / 2.0,
-            self.half_y / 2.0,
-            self.half_z / 2.0,
+            east,
+            north,
+            down,
+            half_x,
+            half_y,
+            half_z,
         );
         let asw = Self::new(
-            self.x - self.half_x / 2.0,
-            self.y - self.half_y / 2.0,
-            self.z + self.half_z / 2.0,
-            self.half_x / 2.0,
-            self.half_y / 2.0,
-            self.half_z / 2.0,
+            west,
+            south,
+            up,
+            half_x,
+            half_y,
+            half_z,
         );
         let ase = Self::new(
-            self.x + self.half_x / 2.0,
-            self.y - self.half_y / 2.0,
-            self.z + self.half_z / 2.0,
-            self.half_x / 2.0,
-            self.half_y / 2.0,
-            self.half_z / 2.0,
+            east,
+            south,
+            up,
+            half_x,
+            half_y,
+            half_z,
         );
         let anw = Self::new(
-            self.x - self.half_x / 2.0,
-            self.y + self.half_y / 2.0,
-            self.z + self.half_z / 2.0,
-            self.half_x / 2.0,
-            self.half_y / 2.0,
-            self.half_z / 2.0,
+            west,
+            north,
+            up,
+            half_x,
+            half_y,
+            half_z,
         );
         let ane = Self::new(
-            self.x + self.half_x / 2.0,
-            self.y + self.half_y / 2.0,
-            self.z + self.half_z / 2.0,
-            self.half_x / 2.0,
-            self.half_y / 2.0,
-            self.half_z / 2.0,
+            east,
+            north,
+            up,
+            half_x,
+            half_y,
+            half_z,
         );
 
         [bsw, bse, bnw, bne, asw, ase, anw, ane]
@@ -113,10 +122,29 @@ impl Dimension for Oct {
 }
 
 ///3-dimensional tree representation.
-pub type OctTree<I> = Tree<I, Oct, TNode<I, Oct>>;
+pub type OctTree<I> = Tree<I, 8, Oct, TNode<I, 8, Oct>>;
 
-impl<I: Debug + Clone + Copy + Hash + PartialEq + Eq> OctTree<I> {
+impl<I: Clone> OctTree<I> {
     pub fn new(translation: Oct) -> Self {
-        Tree::new_tree(TNode::new(translation, BASE_CAPACITY, MAX_DEPTH))
+        Tree::new_tree(TNode::new(translation, DEFAULT_CAPACITY, DEFAULT_MAX_DEPTH))
+    }
+}
+
+#[cfg(test)]
+mod octtree_tests {
+    use super::*;
+
+    #[test]
+    fn octtree() {
+        let mut octtree = OctTree::new(Oct::new(0.0, 0.0, 0.0, 500.0, 500.0, 500.0));
+        for x in -25..25 {
+            for y in -25..25 {
+                for z in -25..25 {
+                    octtree.insert(x * 1009 + y * 1013 + z * 1019, Oct::new(x as f32 * 10.0 + 2.5, y as f32 * 10.0 + 2.5, z as f32 * 10.0 + 2.5, 0.5, 0.5, 0.5));
+                }
+            }
+        }
+        let result = octtree.search(&Oct::new(0.0, 0.0, 0.0, 50.0, 50.0, 50.0));
+        assert_eq!(result.len(), 2197);
     }
 }

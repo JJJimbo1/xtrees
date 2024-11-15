@@ -2,38 +2,39 @@
 extern crate criterion;
 
 use criterion::Criterion;
-use mathfu::D1;
 use rand::random;
-use simple_random::*;
 use xtrees::*;
 
-fn run(n: usize) {
-    // let mut rand = Random::<WichmannHill>::seeded(1421.234);
-    // let mut v = Vec::with_capacity(n);
-    let mut qt =
-        QuadTree::<usize>::new_tree(TNode::new(Quad::new(0.0, 0.0, 1000.0, 1000.0), 17, 12));
+fn map_from_01(value: f32, min: f32, max: f32) -> f32 {
+    value * (min.max(max) - min.min(max)) + min
+}
+
+fn insert(n: usize) {
+    let mut qt = QuadTree::new(Quad::new(0.0, 0.0, 500.0, 500.0));
     for i in 0..n {
-        // rand.range(-1000.0, 1000.0);
-        // rand.range(-1000.0, 1000.0);
-        let x = D1::normalize_from_01(random(), -1000.0, 1000.0);
-        let y = D1::normalize_from_01(random(), -1000.0, 1000.0);
-        qt.insert(i, Quad::new(x, y, 10.5, 10.5));
+        let x = map_from_01(random(), -500.0, 500.0);
+        let y = map_from_01(random(), -500.0, 500.0);
+        qt.insert(i, Quad::new(x, y, 0.5, 0.5));
     }
-    // let v = qt.search(&Quad::new(110.0, 120.0, 1000.0, 800.0));
-    // if random::<f32>() > 1.0 {
-    //     println!("{}", v.len());
-    // }
+}
+
+fn search(quadtree: &QuadTree<usize>) {
+    let x = map_from_01(random(), -500.0, 500.0);
+    let y = map_from_01(random(), -500.0, 500.0);
+    quadtree.search(&Quad::new(x, y, 50.0, 50.0));
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
-    c.bench_function("run", |b| b.iter(|| run(1000)));
+    c.bench_function("insert", |b| b.iter(|| insert(1000)));
 
-    // c.bench_function("raw_iter", |b| b.iter(|| raw_iter(32)));
-    // c.bench_function("raw_iter_mul", |b| b.iter(|| raw_iter_mul(32)));
+    let mut quadtree = QuadTree::new(Quad::new(0.0, 0.0, 500.0, 500.0));
+    for i in 0..1000 {
+        let x = map_from_01(random(), -500.0, 500.0);
+        let y = map_from_01(random(), -500.0, 500.0);
+        quadtree.insert(i, Quad::new(x, y, 0.5, 0.5));
+    }
 
-    // c.bench_function("vec_index_math", |b| b.iter(|| vec_2d(100)));
-    // c.bench_function("vec_index_math", |b| b.iter(|| vec_index_math(100)));
-    // c.bench_function("vec_index_no_math", |b| b.iter(|| vec_index_no_math(100)));
+    c.bench_function("search", |b| b.iter(|| search(&quadtree)));
 }
 
 criterion_group!(benches, criterion_benchmark);
